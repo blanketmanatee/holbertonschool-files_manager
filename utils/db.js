@@ -22,11 +22,17 @@ class DBClient {
       .catch(console.error);
   }
 
-  isAlive() { return this.connected; }
+  isAlive() {
+    return this.connected; 
+  }
 
-  async nbUsers() { return this.users.countDocuments(); }
+  async nbUsers() {
+    return this.users.countDocuments(); 
+  }
 
-  async nbFiles() { return this.files.countDocuments(); }
+  async nbFiles() {
+    return this.files.countDocuments(); 
+  }
 }
 
 const dbClient = new DBClient();
