@@ -23,15 +23,15 @@ class DBClient {
   }
 
   isAlive() {
-    return this.connected; 
+    return this.connected;
   }
 
   async nbUsers() {
-    return this.users.countDocuments(); 
+    return this.users.countDocuments();
   }
 
   async nbFiles() {
-    return this.files.countDocuments(); 
+    return this.files.countDocuments();
   }
 }
 
