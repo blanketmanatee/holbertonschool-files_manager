@@ -6,7 +6,7 @@ function Routing(app) {
   const route = express.Router();
   app.use('/', route);
 
-  route.get('/status', (request, response) => { 
+  route.get('/status', (request, response) => {
     AppController.getStatus(request, response);
   });
   route.get('/stats', ((request, response) => AppController.getStats(request, response)));
