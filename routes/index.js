@@ -11,7 +11,6 @@ function Routing(app) {
   });
   route.get('/stats', ((request, response) => AppController.getStats(request, response)));
   route.post('/users', ((request, response) => UsersController.postNew(request, response)));
-
 }
 
 export default Routing;
