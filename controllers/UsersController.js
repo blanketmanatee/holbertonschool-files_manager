@@ -1,31 +1,27 @@
-import Bull from 'bull';
-import SHA1 from 'SHA1';
+import sha1 from 'sha1';
 import DBClient from '../utils/db';
-import RedisClient from '../utils/redis';
 
-const { ObjectId } = require('mongodb');
+const Bull = require('bull');
 
+class UsersController {
+  static async postNew(request, response) {
+    const userQueue = new Bull('userQueue');
+    const userEmail = request.body.email;
+    if (!userEmail) return response.status(400).json({ error: 'Missing email' });
 
-class UsersControllers{
-    static async postNew(request, response) {
+    const userPw = request.body.password;
+    if (!userPw) return response.status(400).json({ error: 'Missing password' });
 
-        const userEmail = request.body.email;
-        if (!userEmail) return response.status(400).send({ error: 'Missing email'});
+    const existEmail = await DBClient.users.find({ email: userEmail }).toArray();
+    if (existEmail) return response.status(400).json({ error: 'Already exists' });
 
-        const userPassword = request.body.password;
-        if (!userPassword) return response.status(400).send({ error: 'Missing password'});
+    const hashPw = sha1(userPw);
+    const newUser = await DBClient.insertOne({ email: userEmail, password: hashPw });
 
-        const oldUserEmail = await DBClient.db.collection('users').findOne({ email: userEmail });
-        if (oldUserEmail) return response.status(400).send({ error: 'Already exist' });
-
-        const shaUserPassword = sha1(userPassword);
-        const result = await DBClient.db.collection('users').insertOne({ email: userEmail, password: shaUserPassword });
-        userQueue.add({
-            userId: result.insertedId,
-        });
-
-        return response.status(201).send({ id: result.insertedId, email: userEmail });
-    }
+    userQueue.add({ userId: newUser.id });
+    response.statusCode = 201;
+    return response.json(newUser);
+  }
 }
 
-module.exports = UsersControllers;
+module.exports = UsersController;
