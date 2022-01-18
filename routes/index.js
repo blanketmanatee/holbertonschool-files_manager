@@ -1,16 +1,13 @@
-import express from 'express';
-import AppController from '../controllers/AppController';
-import UsersController from '../controllers/UsersController';
+const express = require('express');
+const AppController = require('../controllers/AppController');
 
-function Routing(app) {
-  const route = express.Router();
-  app.use('/', route);
+const router = express.Router();
 
-  route.get('/status', (request, response) => {
-    AppController.getStatus(request, response);
-  });
-  route.get('/stats', ((request, response) => AppController.getStats(request, response)));
-  route.post('/users', ((request, response) => UsersController.postNew(request, response)));
-}
+router.get('/', (req, res) => {
+  console.log('basic endpoint, greeting sent');
+  res.send('hello world\n');
+});
+router.get('/status', AppController.getStatus);
+router.get('/stats', AppController.getStats);
 
-export default Routing;
+module.exports = router;
