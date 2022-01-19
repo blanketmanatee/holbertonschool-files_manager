@@ -1,26 +1,27 @@
-import sha1 from 'sha1';
 import DBClient from '../utils/db';
 
-const Bull = require('bull');
+const sha1 = require('sha1');
 
 class UsersController {
   static async postNew(request, response) {
-    const userQueue = new Bull('userQueue');
-    const userEmail = request.body.email;
-    if (!userEmail) return response.status(400).json({ error: 'Missing email' });
+    const { email, password } = request.body;
 
-    const userPw = request.body.password;
-    if (!userPw) return response.status(400).json({ error: 'Missing password' });
+    if (!email) response.status(400).json({ error: 'Missing email' });
+    else if (!password) response.status(400).json({ error: 'Missing password' });
+    else {
+      const database = await DBClient.connection;
+      const collection = database.collection('users');
+      const user = await collection.findOne({ email });
 
-    const existEmail = await DBClient.users.find({ email: userEmail }).toArray();
-    if (existEmail) return response.status(400).json({ error: 'Already exists' });
-
-    const hashPw = sha1(userPw);
-    const newUser = await DBClient.insertOne({ email: userEmail, password: hashPw });
-
-    userQueue.add({ userId: newUser.id });
-    response.statusCode = 201;
-    return response.json(newUser);
+      if (user !== null) response.status(400).json({ error: 'Already exist' });
+      else {
+        const hashedPw = sha1(password);
+        collection.insertOne({ email, password: hashedPw }, (error, results) => {
+          const newUser = results.ops[0];
+          response.status(201).json({ id: newUser._id, email: newUser.email });
+        });
+      }
+    }
   }
 }
 
