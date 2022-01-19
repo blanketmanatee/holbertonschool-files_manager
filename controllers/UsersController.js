@@ -1,4 +1,4 @@
-import sha1 from 'sha1';
+import crypto from 'crypto';
 import DBClient from '../utils/db';
 
 const Bull = require('bull');
@@ -6,17 +6,18 @@ const Bull = require('bull');
 class UsersController {
   static async postNew(request, response) {
     const userQueue = new Bull('userQueue');
-    const userEmail = request.body.email;
-    if (!userEmail) return response.status(400).json({ error: 'Missing email' });
+    const { email, password } = request.body;
+    if (!email) return response.status(400).json({ error: 'Missing email' });
+    if (!password) return response.status(400).json({ error: 'Missing password' });
 
-    const userPw = request.body.password;
-    if (!userPw) return response.status(400).json({ error: 'Missing password' });
+    const users = await DBClient.db.collection('users');
+    const existUser = await users.find({ email }).toArray();
+    if (existUser.length > 0) return response.status(400).json({ error: 'Already exist' });
 
-    const existEmail = await DBClient.users.find({ email: userEmail }).toArray();
-    if (existEmail) return response.status(400).json({ error: 'Already exists' });
-
-    const hashPw = sha1(userPw);
-    const newUser = await DBClient.insertOne({ email: userEmail, password: hashPw });
+    const hashPw = crypto.createHash('SHA1').update(password).digest('hex');
+    const createUser = await users.insertOne({ email, password: hashPw });
+    const newUser = { id: createUser.insertedId, email };
+    // return response.status(201).json(newUser);
 
     userQueue.add({ userId: newUser.id });
     response.statusCode = 201;
