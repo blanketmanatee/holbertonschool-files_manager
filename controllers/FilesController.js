@@ -7,7 +7,6 @@ import { response } from 'express';
 const { ObjectId } = require('mongodb');
 const fs = require('fs');
 const mime = require('mime-types');
-const Bull = require('bull')
 
 class FilesController {
     static async postUpload(request, response) {
@@ -94,4 +93,5 @@ class FilesController {
         });
     }   
 }
-export default FilesController;
+
+module.exports = FilesController;
