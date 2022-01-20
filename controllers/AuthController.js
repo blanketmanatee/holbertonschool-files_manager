@@ -7,10 +7,9 @@ const sha1 = require('sha1');
 class AuthController {
   static async getConnect(request, response) {
     const auth = request.header('Authorization') || null;
+    if (!auth) return response.status(401).send({ error: 'Unauthorized' });
+
     const authToken = auth.split(' ')[1];
-
-    if (!authToken) return response.status(401).send({ error: 'Unauthorized' });
-
     const decoded = Buffer.from(authToken, 'base64').toString('utf-8');
     const [email, password] = decoded.split(':');
     const user = await DBClient.db.collection('users').findOne({
