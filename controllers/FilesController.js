@@ -92,31 +92,6 @@ class FilesController {
             isPublic: fileDataDb.isPublic,
             parentId: fileDataDb.parentId,
         });
-    }
-
-    static async getShow(req, res){
-        const token = request.header('X-token') || null;
-        if (!token) return response.status(401).send({ error: 'Unauthorized' });
-
-        const redisToken = await RedisClient.get(`auth_${token}`);
-        if (!redisToken) return response.status(401).send({ error: 'Unauthorized' });
-
-        const user = await DBClient.db.collection('users').findOne({ _id: ObjectId(redisToken) });
-        if (!user) return response.status(401).send({ error: 'Unauthorized' });
-
-        const idFile = request.params.id || '';
-
-        const fileDocument = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
-        if (!fileDocument) return response.status(404).send({ error: 'Not found' });
-
-        return response.send({
-            id: fileDocument._id,
-            userId: fileDocument.userId,
-            name: fileDocument.name,
-            type: fileDocument.type,
-            isPublic: fileDocument.isPublic,
-            parentId: fileDocument.parentId,
-        });
-    }
-    
+    }   
 }
+export default FilesController;
