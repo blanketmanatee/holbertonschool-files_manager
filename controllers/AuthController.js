@@ -6,7 +6,7 @@ const sha1 = require('sha1');
 
 class AuthController {
   static async getConnect(request, response) {
-    const auth = request.headers.authorization || '';
+    const auth = request.header('Authorization') || null;
     const authToken = auth.split(' ')[1];
 
     if (!authToken) return response.status(401).send({ error: 'Unauthorized' });
@@ -14,19 +14,17 @@ class AuthController {
     const decoded = Buffer.from(authToken, 'base64').toString('utf-8');
     const [email, password] = decoded.split(':');
     const user = await DBClient.db.collection('users').findOne({
-        email,
-        password: sha1(password),
+      email,
+      password: sha1(password),
     });
 
     if (!user) response.status(401).json({ error: 'Unauthorized' });
-    else {
-        const token = uuidv4();
-        const userKey = `auth_${token}`;
+    const token = uuidv4();
+    const userKey = `auth_${token}`;
 
-        await redisClient.set(userKey, user._id.toString(), 60 * 60 * 24);
-        response.status(200).json({ token });
-      }
-    }
+    await redisClient.set(userKey, user._id.toString(), 60 * 60 * 24);
+    return response.status(200).json({ token });
+  }
 
   static async getDisconnect(request, response) {
     const invalidToken = request.headers['x-token'];
