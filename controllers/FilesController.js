@@ -90,6 +90,54 @@ class FilesController {
       parentId: fileDataDb.parentId,
     });
   }
+
+  static async getShow(request, response) {
+    const token = request.headers['x-token'];
+    const key = `auth_${token}`;
+    const userId = await RedisClient.get(key);
+    if (!userId) return response.status(401).json({ error: 'Unauthorized' });
+    const { id } = request.params;
+    const fileId = ObjectId(id);
+    const file = await DBClient.db.collection('files').find({ _id: fileId }).toArray();
+
+    if (userId.toString() !== file.userId.toString()) return response.status(404).json({ error: 'Not found' });
+    return response.json({
+      id: file[0]._id,
+      userId,
+      name: file[0].name,
+      type: file[0].type,
+      isPublic: file[0].isPublic,
+      parentId: file[0].parentId,
+    });
+  }
+
+  static async getIndex(request, response) {
+    const token = request.headers['x-token'];
+    const key = `auth_${token}`;
+    const user = await RedisClient.get(key);
+    if (!user) return response.status(401).json({ error: 'Unauthorized' });
+
+    const parentId = request.query.parentId || 0;
+    const page = request.query.page || 0;
+    const aggregateMatch = { $and: [{ parentId }] };
+    let aggregateData = [{ $match: aggregateMatch }, { $skip: page * 20 }, { $limit: 20 }];
+    if (parentId === 0) aggregateData = [{ $skip: page * 20 }, { $limit: 20 }];
+
+    const listFiles = await DBClient.db.collection('files').aggregate(aggregateData);
+    const arrayFiles = [];
+    await listFiles.forEach((file) => {
+      const fileObj = {
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId,
+      };
+      arrayFiles.push(fileObj);
+    });
+    return response.send(arrayFiles);
+  }
 }
 
 module.exports = FilesController;
