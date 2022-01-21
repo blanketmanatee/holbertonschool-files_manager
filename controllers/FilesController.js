@@ -167,7 +167,7 @@ class FilesController {
     });
   }
 
-  static async putUnpublish(request, response){
+  static async putUnpublish(request, response) {
     const token = request.header('X-Token') || null;
     if (!token) return response.status(401).send({ error: 'Unauthorized' });
 
@@ -179,7 +179,7 @@ class FilesController {
 
     const idFile = request.params.id || '';
 
-    let fileDocument = await DBClient.db.collection('files').findOne({ _id:ObjectId(idFile), userId: user._id });
+    let fileDocument = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
     if (!fileDocument) return response.status(404).send({ error: 'Not found' });
 
     await DBClient.db.collection('files').update({ _id: ObjectId(idFile), userId: user._id }, { $set: { isPublic: false } });
